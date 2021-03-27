@@ -1,7 +1,7 @@
 # bubbles
 Expanding circles
 # Demo
-xyz.txt
+http://iznax.github.com/bubbles/
 # Change Log
 1. Initial version
 2. Update package
