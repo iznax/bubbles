@@ -38,14 +38,21 @@
   </style>
 </head>
 <body>
-  <P>XYZ: Web Page?</P>
+  <P>Test Multiple Rings Expanding</P>
   <div class="slidecontainer">
     <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
   </div>
-  <H1>ROUND</H1>
-  <div class="slidecontainer">
-    <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-    <p>Value: <span id="demo"></span></p>
-  </div>    
+  <H1>Timeline</H1>
+  <table align="center">
+    <tr>
+      <td align="center" width=256><b id="title"/></td>
+    </tr>
+    <tr>
+      <td><canvas id="canvas" width="216" height="216"/></td>
+      <td width=1></td>
+      <td><div id="out"></div></td>
+    </tr>
+    <tr><td align=center><div id="notes"></div></td></tr>
+  </table>  
 </body>
 </html>
