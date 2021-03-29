@@ -119,22 +119,46 @@
     <input type="range" min="0" max="1024" value="256" class="slider" id="myRange">
   </div>
 
-  <br><button onclick="save_images()">DOWNLOAD (15-frames)</button><br>
+  <br><button onclick="save_images()">DOWNLOAD (15-frames)</button>
+  <button onclick="save_image(0)">F0</button>
+  <button onclick="save_image(1)">F1</button>
+  <button onclick="save_image(2)">F2</button>
+  <button onclick="save_image(3)">F3</button>
+  <button onclick="save_image(4)">F4</button>
+  <button onclick="save_image(5)">F5</button>
+  <button onclick="save_image(6)">F6</button>
+  <button onclick="save_image(7)">F7</button>
+  <button onclick="save_image(8)">F8</button>
+  <button onclick="save_image(9)">F9</button>
+  <button onclick="save_image(10)">F10</button>
+  <button onclick="save_image(11)">F11</button>
+  <button onclick="save_image(12)">F12</button>
+  <button onclick="save_image(13)">F13</button>
+  <button onclick="save_image(14)">F14</button>
+  <button onclick="save_image(15)">F15</button>
+  <br>
   <script>
 	function saveBlob(filename)
 	{
 		return function(blob) { saveAs(blob, filename);	}
 	}
-	function save_images()
+	function save_image(frame)
 	{
 		var numFrames = 15;
-		for (var i=0; i<=numFrames; ++i)
+		var f = Math.min(Math.max(0,frame),15);
+		Redraw(f*1024/numFrames);
+		// The toBlob function does not take an extra filename parameter
+		// and setting blob name does not work when saving multiple images
+		// A unique function has to be created with the filename payload
+		var fname = "download-" + (f<10?"0":"") + f;
+		canvas.toBlob(saveBlob(fname));
+	}
+
+	function save_images(first,last)
+	{
+		for (var i=first; i<=last; ++i)
 		{
-			Redraw(i*1024/numFrames);
-			// The toBlob function does not take an extra filename parameter
-			// and setting blob name does not work when saving multiple images
-			// A unique function has to be created with the filename payload
-			canvas.toBlob(saveBlob("download-0"+i));
+			save_image(f);
 		}
 	}
   </script>
