@@ -1,5 +1,5 @@
 # bubbles
-Expanding circles
+Interactive set of expanding circles
 
 # Demo
 https://iznax.github.io/bubbles
