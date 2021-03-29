@@ -43,22 +43,293 @@
 }
   </style>
 </head>
+
 <body>
-  <P>Test Multiple Rings Expanding 123</P>
+
+	<script type='text/javascript' src='FileSave.js'></script>
+
+	<input id='grid' type="checkbox" name="grid" onclick="onGridChecked()" checked="true">
+	<label for="grid">Show Grid</label><br>
+	<script>
+		function onGridChecked() { Redraw(); }
+	</script>
+
+	<input id='edge' type="checkbox" name="edge" onclick="onEdgeChecked()">
+	<label for="grid">Only Edges</label><br>
+	<script>
+		function onEdgeChecked() { console.log("Edge = "+document.getElementById('edge').checked); Redraw(); }
+	</script>
+
+	<input id='move' type="checkbox" name="move" onclick="onMoveChecked()" checked=''>
+	<label for="grid">Movement</label><br>
+	<script>
+		function onMoveChecked() { Redraw(); }
+	</script>
+
+	<br>
+	<label for="seed">Seed: </label>
+	<input id=seed type=number min=0 max=65535 value="0" onchange="Redraw()"/>
+	<button onclick="RandomizeSeed()">Randomize</button><br><br>
+	<script>function RandomizeSeed(){$('seed').value=Math.floor(Math.random()*65535);Redraw();}</script>
+
+	<label for="stagger">Stagger: </label>
+	<input id=stagger type=number min=0 max=8 value="0" onchange="Redraw()"/>
+	<button onclick="incZ()">+</button>
+	<button onclick="decZ()">-</button><br><br>
+	<script>
+		function incZ() { document.getElementById('stagger').stepUp(); Redraw(); }
+		function decZ() { document.getElementById('stagger').stepDown(); Redraw(); }
+	</script>
+	
+	<label for="rings">Rings:</label>
+	<input id=rings type=number min=1 max=16 value="2"/>
+	<button onclick="increment()">+</button>
+	<button onclick="decrement()">-</button><br>
+	<script>
+		function increment() { document.getElementById('rings').stepUp(); Redraw(); }
+		function decrement() { document.getElementById('rings').stepDown(); Redraw(); }
+	</script>
+
+	<br>
+	<label for="offsetX">Offset X:</label>
+	<input id=offsetX type=number min=-25 max=25 value="0"/><button onclick="incX()">+</button><button onclick="decX()">-</button><br>
+	<label for="offsetY">Offset Y:</label>
+	<input id=offsetY type=number min=-25 max=25 value="0"/><button onclick="incY()">+</button><button onclick="decY()">-</button><br>
+	<script>
+		function incX() { document.getElementById('offsetX').stepUp(); Redraw(); }
+		function decX() { document.getElementById('offsetX').stepDown(); Redraw(); }
+		function incY() { document.getElementById('offsetY').stepUp(); Redraw(); }
+		function decY() { document.getElementById('offsetY').stepDown(); Redraw(); }
+	</script>
+	
+	<table align="center">
+		<tr>
+			<td align="center" width=256><H1 id="title"/>Test Multiple Expanding Rings</td>
+		</tr>
+		<tr>
+			<td><canvas id="canvas" width="512" height="512"/></td>
+			<td width=1></td>
+			<td><div id="out"></div></td>
+		</tr>
+		<tr><td align=center><div id="notes">...</div></td></tr>
+	</table>
+  
+  <H2>Timeline (drag to adjust)</H2>
   <div class="slidecontainer">
-    <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+    <input type="range" min="0" max="1024" value="256" class="slider" id="myRange">
   </div>
-  <H1>Timeline</H1>
-  <table align="center">
-    <tr>
-      <td align="center" width=256><b id="title"/></td>
-    </tr>
-    <tr>
-      <td><canvas id="canvas" width="216" height="216"/></td>
-      <td width=1></td>
-      <td><div id="out"></div></td>
-    </tr>
-    <tr><td align=center><div id="notes"></div></td></tr>
-  </table>  
+
+  <br><button onclick="save_images()">DOWNLOAD (15-frames)</button><br>
+  <script>
+	function saveBlob(filename)
+	{
+		return function(blob) { saveAs(blob, filename);	}
+	}
+	function save_images()
+	{
+		var numFrames = 15;
+		for (var i=0; i<=numFrames; ++i)
+		{
+			Redraw(i*1024/numFrames);
+			// The toBlob function does not take an extra filename parameter
+			// and setting blob name does not work when saving multiple images
+			// A unique function has to be created with the filename payload
+			canvas.toBlob(saveBlob("download-0"+i));
+		}
+	}
+  </script>
+  
+<script id="jsbin-javascript">
+function $(id)
+{
+    return document.getElementById(id)
+}
+
+var canvas = $("canvas");
+var ctx = canvas.getContext("2d");
+
+var GridX = 4;
+var GridY = 4;
+var WorldX = 512;
+var WorldY = 512;
+
+function CreateImage(c1,c2,t)
+{
+    var canvas = $("tile");
+    var ctx = canvas.getContext("2d");
+    var s=SZ/8;
+    for(var k=0;k<8;k++)
+    for(var b=0;b<8;b++)
+    {
+        var rgb = (t[k]&(1<<b)) ? c1:c2;
+        ctx.fillStyle = "rgb("+ rgb +")";
+        ctx.fillRect(b*s,k*s,s*2,s*2);
+    }
+    var img = new Image();
+    img.src = canvas.toDataURL();
+    return img;
+}
+
+function DrawRing(xx,yy,radius)
+{
+	var canvas = $("canvas");
+	var ctx = canvas.getContext("2d");
+	ctx.fillStyle = "rgb("+[255,180,0]+")";
+	ctx.beginPath();
+	ctx.arc(xx, yy, radius, 0, 2*Math.PI);
+	ctx.fill();
+}
+
+function GetRadius(index,time)
+{
+	var scale = 0.5;
+	var stagger = $('stagger').value;
+	var offset = index * stagger * 10;
+	var speed = 1.0;
+	var useSpeed = false;
+	if (useSpeed)
+	{
+		if (index == 0) scale = 0.75;
+		if (index == 1) scale = 1.25;
+		if (index == 2) scale = 2.00;
+		if (index == 3) scale = 2.00;
+		if (index >= 4) scale = 1.00;
+	}
+	return Math.max(0,time-offset)*scale*2.0;
+}
+
+function DrawGrid(w,h)
+{
+	ctx.fillStyle = "rgb("+[96,96,96]+")";
+	for(var i=0;i<w;++i)
+	{
+		var yy = i*(WorldY/h);
+		ctx.fillRect(0,yy-2,WorldX,4);
+	}
+	for(var i=0;i<w;++i)
+	{
+		var xx = i*(WorldX/w);
+		ctx.fillRect(xx-2,0,4,WorldY);
+	}
+}
+
+Random = { seed:12345 };
+
+Random.init = function (value)
+{
+	this.seed = value;
+};
+
+// Get next 32 pseudo-random bits -- modifies seed each time
+Random.next = function()
+{
+	this.seed = (this.seed + 0x6D2B79F5) & 0xFFFFFFFF;
+	var z = this.seed;
+	z = (z ^ (z >> 15)) * (z | 1);
+	z ^= z + (z ^ (z >> 7)) * (z | 61);
+	return z ^ (z >> 14);
+};
+
+var Notes = $('notes');
+
+var Slider = document.getElementById("myRange");
+Slider.oninput = function() { Redraw(this.value); }
+
+function Redraw(time=-1)
+{
+	if (time < 0)
+	{
+		time = Slider.value;
+	}
+
+	// Slider max = 1024
+	Notes.innerText = Math.floor(time*100/1024)+"%";
+	
+	ctx.fillStyle = "rgb("+[0,0,0]+")";
+	ctx.fillRect(0,0,WorldX,WorldY);
+	
+	var dx = $('offsetX') ? offsetX.value*16 : 0;
+	var dy = $('offsetY') ? offsetY.value*16 : 0;
+	
+	var Scale = 0.35;
+	var t = time * Scale;
+
+	var edge = $('edge').checked == true;
+	var context = { DX:dx, DY:dy, Edge:edge };
+
+	//console.log("Context DX="+context.DX);
+	//console.log("Context DY="+context.DY);
+
+	var R2 = function(context,ix,iy)
+	{
+		var edge = context.Edge;
+		var xx = context.DX + ((seed == 0) ? ix : Random.next() % WorldX);
+		//console.log("Redraw edge="+edge+" ix="+ix+" DX="+context.DX+" => "+xx);
+		var yy = context.DY + ((seed == 0) ? iy : Random.next() % WorldY);
+		if (edge)
+		{
+			var d1 = xx;
+			var d2 = WorldX - xx;
+			var d3 = yy;
+			var d4 = WorldY - yy;
+			if (d1 <= d2 && d1 <= d3 && d1 <= d4)
+			{
+				xx = 0;
+			}
+			else if (d2 <= d1 && d2 <= d3 && d2 <= d4)
+			{
+				xx = WorldX;
+			}
+			else if (d3 <= d1 && d3 <= d2 && d3 <= d4)
+			{
+				yy = 0;
+			}
+			else
+			{
+				yy = WorldY;
+			}
+		}
+		//console.log("Final xx="+xx);
+		return [xx,yy];
+	};
+	
+	var num = $('rings').value;
+	var seed = $('seed').value;
+	Random.init(seed);
+	
+	var P1 = (num > 0) ? R2(context, 32,32) : [0,0];
+	var P2 = (num > 1) ? R2(context, 256, 256) : [0,0];
+	var P3 = (num > 2) ? R2(context, WorldX, WorldY) : [0,0];
+	var P4 = (num > 3) ? R2(context, 50, WorldY-50) : [0,0];
+	var P5 = (num > 4) ? R2(context, 128, 128) : [0,0];
+	var P6 = (num > 5) ? R2(context, 384, 128) : [0,0];
+	var P7 = (num > 6) ? R2(context, 384, 384) : [0,0];
+	var P8 = (num > 7) ? R2(context, 128, 384) : [0,0];
+	
+	for (var n=0; n < num; ++n)
+	{
+		if (n==0) DrawRing(P1[0],P1[1],GetRadius(n,t));
+		if (n==1) DrawRing(P2[0],P2[1],GetRadius(n,t));
+		if (n==2) DrawRing(P3[0],P3[1],GetRadius(n,t));
+		if (n==3) DrawRing(P4[0],P4[1],GetRadius(n,t));
+		if (n==4) DrawRing(P5[0],P5[1],GetRadius(n,t));
+		if (n==5) DrawRing(P6[0],P6[1],GetRadius(n,t));
+		if (n==6) DrawRing(P7[0],P7[1],GetRadius(n,t));
+		if (n==7) DrawRing(P8[0],P8[1],GetRadius(n,t));
+	}
+
+	var checkBox = $('grid');
+	if (checkBox && checkBox.checked)
+	{
+		DrawGrid(GridX,GridY);
+	}
+}
+
+$('move').checked = false;
+$('edge').checked = false;
+
+Redraw();
+
+</script>
 </body>
 </html>
