@@ -2,9 +2,7 @@
 Expanding circles
 
 # Demo
-http://iznax.github.com/bubbles/
-
-http://iznax.github.io/bubbles
+https://iznax.github.io/bubbles
 
 # Change Log
 1. Initial version
